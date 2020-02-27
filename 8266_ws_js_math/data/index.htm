@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+		<title>Y.A.K.E 网页代8266进行运算例程</title>
+	<link href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet">
+	<style type="text/css">
+		.table {
+			table-layout: fixed;
+			border-top-color: #428BCA;
+		}
+		
+		.table td {
+			overflow-x: auto;
+		}
+		
+		.table thead th {
+			background-color: #428BCA;
+			border-color: #428BCA !important;
+			color: #FFF;
+		}
+		
+		.info-column {
+			width: 120px;
+		}
+		
+		.frags-column {
+			width: 80px;
+		}
+		.ws_status {
+	font-weight: bold;
+	margin-left: 5px;
+}
+.info {
+	text-align: center;
+	line-height: 20px;
+	color: blueviolet;
+	padding: 10px 0px;
+}
+.text_2 {
+	display:none;
+}
+	</style>		
+		
+	</head>
+	<body>
+	
+	<div class="jumbotron">
+		<div class="container">
+			<h1>网页代8266进行运算例程</h1>
+			
+			<p class="lead text_1">在串口输入一个数学公式,然后会通过串口发送本网页.然后网页帮忙计算出结果,再返回给串口.<br><br>
+			8266如果用自己的运算能力,默认最大只能计算阶乘32!
+			<br>网页js除了效率更快,还能计算结果更大的. 你可以在串口输入一个100! 试试.<br><br>PS:除了加减乘除/开方/三角函数等 基本之外支持复杂的数学公式这里参考下--> 
+			<a href="http://mathnotepad.com/docs/overview.html" target="_blank" >链接</a>
+			
+			</p>
+			
+			<p class="lead text_2">将用户串口发来的字符串RSA (公钥加密,对应私钥是1024位)加密. <br>8266性能很难处理RSA非对称计算.即使能计算.保守估计,计算20位长度的字符串,可能需要1分钟以上才能得到结果.<br><br>
+			但是如果使用JS加密解密,速度就非常快了.<br>在一些安全要求高的场景,又不得不使用复杂加密的时候.<br>这个方案就有点意思了.
+			
+			</p>			
+			<p>
+				<a class="btn btn-large btn-primary" target="_blank" href="https://www.yge.me">By : Y.A.K.E</a>
+				<a class="btn btn-large btn-primary" target="_blank" href="https://github.com/xunni1000/8266_ws_js_math">源码GitHub</a>
+				<a class="btn btn-large btn-danger" target="_blank" href="https://github.com/xunni1000/8266_ws_js_math/blob/master/LICENSE">MIT</a>
+			</p>
+			<hr>
+			<div>WS服务器状态:<span class="ws_status"> </span></div>
+			<hr>
+<div class="form-group">
+    <label for="formGroupExampleInput2">JS运算处理方式</label>
+	<div></div>
+			<div class="form-check form-check-inline">
+			  <input class="form-check-input c_a_a" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="1" checked>
+			  <label class="form-check-label"  autocomplete="off"  for="inlineRadio1">数学公式运算</label>
+			</div>
+			<div class="form-check form-check-inline">
+			  <input class="form-check-input c_a_b" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="2">
+			  <label class="form-check-label"   autocomplete="off"  for="inlineRadio2">RSA (1024位)公钥加密</label>
+			</div>
+  </div>			
+			
+
+		</div>
+	</div>	
+	
+	<div class="container">
+		<div  class="info">
+			<p>下面的两个框是只读的,只是用于测试效果.运算部分在网页js里面.</p>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">	
+				<h3>服务器传来公式</h3>
+				
+					<textarea id="ser_text" autocomplete="off" readonly="readonly" class="form-control" aria-hidden="true"></textarea>
+				
+			</div>
+			<div class="col-sm-6">	
+				<h3>网页JS代运算结果</h3>
+				<textarea id="js_text" autocomplete="off"  readonly="readonly" class="form-control" aria-hidden="true"></textarea>
+			</div>			
+		</div>
+	</div>
+<script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/js/bootstrap.min.js"></script>	
+<script src="https://cdn.staticfile.org/mathjs/6.6.0/math.min.js"></script>
+<script src="https://cdn.staticfile.org/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
+
+
+
+<script>
+$(function(){
+var PUBLIC_KEY = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDFb9hpuMWvJP/809dgCi4J6G7TM85dHNM4QBFf3tPzo0fVpvkcSN+jnEM9UuZlCX3yRNaMKkHQ3ls8eqcxmDq97+1j4BkL+0I4XUMv3BXp2M3fRZmpTpsACXCmRvy9njtoO7ZG5aETRKclgst5lU3sagPciUVZkAi50AO4QhrgQwIDAQAB';
+var encrypt = new JSEncrypt();
+encrypt.setPublicKey('-----BEGIN PUBLIC KEY-----' + PUBLIC_KEY + '-----END PUBLIC KEY-----');
+
+
+	var test_show = function (){
+		var _type = $('.form-check  input:radio:checked').val(); 
+		console.log(_type);
+		if (_type == 1) {
+			$('.text_1').show();
+			$('.text_2').hide();
+		}else{
+			$('.text_2').show();
+			$('.text_1').hide();
+		}
+		
+	};
+	$(".c_a_a").prop("checked", "checked");    $(".c_a_a").click();
+	
+	//test_show();
+	$('.form-check-input').change(function(){
+		test_show();
+	});	
+	
+	var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+	
+	connection.onopen = function () {
+		$('.ws_status').text('已连接');
+		//已连接
+	};	
+	connection.onerror = function (error) {
+		console.log('WebSocket Error ', error);
+		$('.ws_status').text('error:' + error);
+	};	
+	connection.onmessage = function (e) {  
+		console.log('Server: ', e.data);
+		var _in_str = e.data;
+		_in_str = _in_str.trim(); //去空字符串	
+		var _type = $('.form-check  input:radio:checked').val(); //获取计算类型		
+		if (_in_str.length > 0){
+			//先计算,再返回给8266,再网页输出,尽可能保证8266得到结果的时间最短.
+			var _out_str = '';
+			
+			if (_type == 1){
+				_out_str =  math.eval(_in_str); //计算公式
+			}else{
+				 _out_str = encrypt.encrypt(JSON.stringify(_in_str));
+				//console.log('加密后数据:%o', _out_str);			
+			}
+				
+			connection.send(_out_str); //将结果马上返回给8266
+		
+			$('#ser_text').val(_in_str); //将数据投送到框
+			$('#js_text').val(_out_str); //将数据投送到框
+		}
+		
+		
+	};
+	
+	
+
+	
+});
+
+
+
+
+</script>
+
+	</body>
+</html>
